@@ -42,7 +42,44 @@ public:
 	~BoolExpression() {}
 
 };
+//浮点表达式
+class FloatExpression : public Expression
+{
+public:
+	FloatExpression(float _value, int _line, int _column) :Expression(_line, _column), exp_value(_value) {}
+	//表达式的值
+	float exp_value;
+	~FloatExpression() {}
+};
 
+//字符表达式
+class CharExpression : public Expression
+{
+public:
+	CharExpression(char _value, int _line, int _column) :Expression(_line, _column), exp_value(_value) {}
+	//表达式的值
+	char exp_value;
+	~CharExpression() {}
+};
+
+//字符串表达式
+class StringExpression : public Expression
+{
+public:
+	StringExpression(std::string _value, int _line, int _column) :Expression(_line, _column), exp_value(_value) {}
+	//表达式的值
+	std::string exp_value;
+	~StringExpression() {}
+};
+//整形表达式
+class IntExpression : public Expression
+{
+public:
+	IntExpression(int _value, int _line, int _column) :Expression(_line, _column), exp_value(_value) {}
+	//表达式的值
+	int exp_value;
+	~IntExpression() {}
+};
 
 
 //语句
@@ -58,7 +95,7 @@ public:
 class ExpressionStatement : public Statement
 {
 public:
-	ExpressionStatement(Expression* expr, int _line, int _column) :Statement(_line, _column), expression(expr) {}
+	ExpressionStatement(std::shared_ptr<Expression> expr, int _line, int _column) :Statement(_line, _column), expression(expr) {}
 	//包含一个表达式，其中包括赋值，函数调用，一元二元计算
 	std::shared_ptr<Expression> expression;
 	virtual operand evaluation(std::vector<Quaternion>& stms, Memory& memory, NameTable& table)
@@ -89,7 +126,7 @@ public:
 	//左表达式分支
 	std::shared_ptr<Expression> left_expression = nullptr;
 	//操作符
-	int opt;
+	Token opt;
 	//右表达式分支
 	std::shared_ptr<Expression> right_expression = nullptr;
 	//表达式解析
@@ -104,7 +141,7 @@ public:
 	//左值表达式
 	std::shared_ptr<Expression> left_value;
 	//运算符
-	int opt;
+	Token opt;
 	//右值表达式
 	std::shared_ptr<Expression> right_value;
 	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }

@@ -6,7 +6,7 @@ enum Token {
 	TK_EOF,      // <eof>
 	TK_INT,     // <integer> 整形
 	TK_STR,     // <string> 字符串
-	TK_DOUBLE,  // <double> 浮点类型
+	TK_FLOAT,  // <float> 浮点类型
 	TK_CHAR,    // <character> 字符类型
 	TK_LIST,    // list类型
 	TK_BOOL,    // bool类型
@@ -62,7 +62,7 @@ enum Token {
 	KW_BREAK,     // break
 	KW_CONTINUE,  // continue
 	KW_INT,       //int
-	KW_DOUBLE,    //double
+	KW_FLOAT,    //float
 	KW_STRING,    //string
 	KW_BOOL,      //bool
 	KW_CHAR,      //char

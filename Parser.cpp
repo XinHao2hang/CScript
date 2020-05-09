@@ -1,4 +1,5 @@
 #include"Parser.h"
+#include <sstream>
 Parser::Parser() :
 	keyWords({
 		{"if",KW_IF},
@@ -10,7 +11,7 @@ Parser::Parser() :
 		{"false",KW_FALSE},
 		{"else",KW_ELSE},
 		{"int",KW_INT},
-		{"double",KW_DOUBLE},
+		{"double",KW_FLOAT},
 		{"bool",KW_BOOL},
 		{"string",KW_STRING},
 		{"char",KW_CHAR},
@@ -33,7 +34,7 @@ Parser::Parser(std::string fileName):
 		{"false",KW_FALSE},
 		{"else",KW_ELSE},
 		{"int",KW_INT},
-		{"double",KW_DOUBLE},
+		{"double",KW_FLOAT},
 		{"using",KW_USING},
 		{"extern",KW_EXTERN},
 		{"library",KW_LIBRARY},
@@ -110,25 +111,25 @@ std::tuple<Token, std::string> Parser::nextToken()
 	//如果遇到数字
 	if (c >= '0' && c <= '9')
 	{
-		bool isDouble = false;
+		bool isFloat = false;
 		std::string lexem;
 		lexem += c;
 		char c_next = peekChar();
 		//遇到数字的时候继续获取数字
-		while (c_next >= '0' && c_next <= '9')
+		while (c_next >= '0' && c_next <= '9' || (!isFloat&&c_next == '.'))
 		{
 			c = nextChar();
 			lexem += c;
 			//如果遇到小数点，处理小数点,前提当前数字是整数
-			if (isDouble == false && peekChar() == '.')
+			if (c == '.')
 			{
 				c = nextChar();
 				lexem += c;
-				isDouble = true;
+				isFloat = true;
 			}
 			c_next = peekChar();
 		}
-		return isDouble ? make_tuple(TK_DOUBLE, lexem) : make_tuple(TK_INT, lexem);
+		return isFloat ? make_tuple(TK_FLOAT, lexem) : make_tuple(TK_INT, lexem);
 	}
 
 	//如果遇到标识符，关键字
@@ -359,16 +360,23 @@ std::shared_ptr<Statement> Parser::parseStatement()
 	std::shared_ptr<Statement> result;
 	switch (getToken())
 	{
+	//声明语句
 	case KW_BOOL:
-		result = decalreStatement();
+	case KW_INT:
+	case KW_CHAR:
+	case KW_STRING:
+	case KW_FLOAT:
+		result = decalre();
 		break;
+	//表达式语句
 	default:
+		result = expression();
 		break;
 	}
 	return result;
 }
 
-std::shared_ptr<Statement> Parser::decalreStatement()
+std::shared_ptr<Statement> Parser::decalre()
 {
 	return variableDeclare();
 }
@@ -442,7 +450,7 @@ std::shared_ptr<Expression> Parser::parseExpression()
 std::shared_ptr<Expression> Parser::parseUnaryExpr()
 {
 	//什么情况下是一元表达式
-	int token = getToken();
+	Token token = getToken();
 	//有符号前缀的情况下
 	if (token == TK_MINUS || token == TK_LOGNOT || token == TK_BITNOT)
 	{
@@ -460,7 +468,7 @@ std::shared_ptr<Expression> Parser::parseUnaryExpr()
 	}
 
 	//一些不带符号的基础表达式也列为无符号一元表达式
-	else if (token == TK_INT || token == TK_DOUBLE || token == TK_STR || token == TK_CHAR
+	else if (token == TK_INT || token == TK_FLOAT || token == TK_STR || token == TK_CHAR
 		|| token == TK_IDENT || token == KW_FALSE || token == KW_TRUE || token == TK_LPAREN || token == TK_LBRACE)
 	{
 		//返回基础表达式
@@ -476,6 +484,8 @@ std::shared_ptr<Expression> Parser::parsePrimaryExpr()
 	{
 		//保留当前标识符名字
 		std::string identName = getLexeme();
+		//吃掉标识符
+		pushNextToken();
 		return std::make_shared<IdentifierExpression>(identName, line, column);
 	}
 	//如果是布尔
@@ -487,18 +497,47 @@ std::shared_ptr<Expression> Parser::parsePrimaryExpr()
 		pushNextToken();
 		return result;
 	}
-	//如果是括号
-	else if (getToken() == TK_LPAREN)
+	else if (getToken() == TK_INT)
 	{
-		//吃掉括号
+		//获取数字
+		int val = atoi(getLexeme().c_str());
+		//吃掉数字
 		pushNextToken();
-		auto result = parseExpression();
-		//获取右括号
-		if (getToken() != TK_RPAREN)
-			throw("error");
-		//吃掉右括号
+		return  std::make_shared<IntExpression>(val,line,column);
+	}
+	else if (getToken() == TK_STR)
+	{
+		//获取字符串
+		std::string val = getLexeme();
+		//吃掉字符串
 		pushNextToken();
-		return result;
+		return std::make_shared<StringExpression>(val, line, column);
+	}
+	else if (getToken() == TK_CHAR)
+	{
+		//获取字符
+		char val = getLexeme()[0];
+		//吃掉字符
+		pushNextToken();
+		return std::make_shared<CharExpression>(val, line, column);
+	}
+	else if (getToken() == TK_FLOAT)
+	{
+		std::istringstream in;
+		//获取数字
+		in.str(getLexeme());
+		float val = 0;
+		in >> val;
+		//吃掉数字
+		pushNextToken();
+		return std::make_shared<FloatExpression>(val, line, column);
 	}
 	return nullptr;
+}
+
+std::shared_ptr<Statement> Parser::expression()
+{
+	//普通表达式
+	auto expr = parseExpression();
+	return std::make_shared<ExpressionStatement>(expr,line,column);
 }

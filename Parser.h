@@ -52,7 +52,9 @@ class Parser
 	//语法入口
 	std::shared_ptr<Statement> parseStatement();
 	//声明表达式
-	std::shared_ptr<Statement> decalreStatement();
+	std::shared_ptr<Statement> decalre();
+	//普通表达式
+	std::shared_ptr<Statement> expression();
 	//变量声明
 	std::shared_ptr<VariableDeclareStatement> variableDeclare();
 public:
