@@ -7,22 +7,22 @@ public:
 	Memory()
 	{
 		//初始化内存
-		memory.resize(4096);
+		memory = new char[8192];
 	}
 	//生成中间代码用的地址分配计数器
 	int address = 0;
 	//内存空间
 	int esp=0;
 	int ebp = 0;
-	int malloc()
+	int malloc(int size)
 	{
-		return ++address;
+		return address+=size;
 	}
-	int & operator[](int addr)
+	char & operator[](int addr)
 	{
 		return memory[addr];
 	}
-	std::vector<int> memory;
+	char * memory;
 	~Memory(){}
 };
 

@@ -57,6 +57,8 @@ class Parser
 	std::shared_ptr<Statement> expression();
 	//变量声明
 	std::shared_ptr<VariableDeclareStatement> variableDeclare();
+	//数组声明
+	std::shared_ptr<ArrayDeclareStatement> arrayDeclare();
 public:
 	Parser();
 	Parser(std::string fileName);

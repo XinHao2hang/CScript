@@ -188,7 +188,7 @@ std::tuple<Token, std::string> Parser::nextToken()
 	if (c == '[')
 		return std::make_tuple(TK_LBRACKET, "[");
 	if (c == ']')
-		return std::make_tuple(TK_RBRACKET, "[");
+		return std::make_tuple(TK_RBRACKET, "]");
 	if (c == '(')
 		return std::make_tuple(TK_LPAREN, "(");
 	if (c == ')')
@@ -378,7 +378,10 @@ std::shared_ptr<Statement> Parser::parseStatement()
 
 std::shared_ptr<Statement> Parser::decalre()
 {
-	return variableDeclare();
+	if (getToken(2) == TK_LBRACKET)
+		return arrayDeclare();
+	else
+		return variableDeclare();
 }
 
 std::shared_ptr<VariableDeclareStatement> Parser::variableDeclare()
@@ -393,6 +396,40 @@ std::shared_ptr<VariableDeclareStatement> Parser::variableDeclare()
 	result->identName = getLexeme();
 	//吃掉标识符
 	pushNextToken();
+	return result;
+}
+
+std::shared_ptr<ArrayDeclareStatement> Parser::arrayDeclare()
+{
+	auto result = std::make_shared<ArrayDeclareStatement>(line,column);
+	//获取类型，类型名
+	result->type = getToken();
+	result->typeName = getLexeme();
+	//吃掉类型
+	pushNextToken();
+	//获取数组名
+	result->name = getLexeme();
+	//吃掉数组名
+	pushNextToken();
+	//获取多维数组
+	while (getToken() == TK_LBRACKET)
+	{
+		//吃掉中括号
+		pushNextToken();
+		//检测下标是否符合规则，要求下标是整形数字
+		std::shared_ptr<Expression> index = parseExpression();
+		if (typeid(*index) == typeid(IntExpression))
+		{
+			result->elementNums.push_back(index);
+		}
+		else
+		{
+			//这里要报错，暂时抛出个异常
+			throw("error");
+		}
+		//吃掉中括号
+		pushNextToken();
+	}
 	return result;
 }
 
@@ -444,6 +481,25 @@ std::shared_ptr<Expression> Parser::parseExpression()
 		unary_result = result;
 		token = getToken();
 	}
+	//隐式二元运算
+	if (token == TK_LBRACKET)
+	{
+		
+		//二元表达式
+		auto result = std::make_shared<AddressingExpression>(line, column);
+		//这里放之前的一元表达式
+		result->base = unary_result;
+		while (getToken() == TK_LBRACKET)
+		{
+			//吃掉中括号
+			pushNextToken();
+			//右分支也是表达式
+			result->offset.push_back(parseExpression());
+			//吃掉中括号
+			pushNextToken();
+		}
+		return result;
+	}
 	return unary_result;
 }
 
@@ -484,6 +540,25 @@ std::shared_ptr<Expression> Parser::parsePrimaryExpr()
 	{
 		//保留当前标识符名字
 		std::string identName = getLexeme();
+		////如果是数组
+		//if (getToken(1) == TK_LBRACKET)
+		//{
+		//	auto result = std::make_shared<AddressingExpression>(line, column);
+		//	//获取基址
+		//	result->base = identName;
+		//	//吃掉标识符
+		//	pushNextToken();
+		//	while (getToken() == TK_LBRACKET)
+		//	{
+		//		//吃掉中括号
+		//		pushNextToken();
+		//		//获取偏移
+		//		result->offset.push_back(parseExpression());
+		//		//吃掉中括号
+		//		pushNextToken();
+		//	}
+		//	return result;
+		//}
 		//吃掉标识符
 		pushNextToken();
 		return std::make_shared<IdentifierExpression>(identName, line, column);

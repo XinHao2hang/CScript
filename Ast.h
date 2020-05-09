@@ -71,6 +71,7 @@ public:
 	std::string exp_value;
 	~StringExpression() {}
 };
+
 //整形表达式
 class IntExpression : public Expression
 {
@@ -79,31 +80,6 @@ public:
 	//表达式的值
 	int exp_value;
 	~IntExpression() {}
-};
-
-
-//语句
-class Statement : public AstNode
-{
-public:
-	Statement(int _line, int _column) :AstNode(_line, _column) {}
-	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
-	~Statement() {}
-};
-
-//表达式语句
-class ExpressionStatement : public Statement
-{
-public:
-	ExpressionStatement(std::shared_ptr<Expression> expr, int _line, int _column) :Statement(_line, _column), expression(expr) {}
-	//包含一个表达式，其中包括赋值，函数调用，一元二元计算
-	std::shared_ptr<Expression> expression;
-	virtual operand evaluation(std::vector<Quaternion>& stms, Memory& memory, NameTable& table)
-	{
-		return expression->evaluation(stms, memory, table);
-	}
-	~ExpressionStatement() {}
-
 };
 
 //标识符表达式
@@ -148,6 +124,44 @@ public:
 	~AssignExpression() {}
 };
 
+//寻址表达式
+class AddressingExpression : public Expression
+{
+public:
+	AddressingExpression(int _line, int _column) :Expression(_line, _column) {}
+	//基地址
+	std::shared_ptr<Expression> base;
+	//下标,偏移地址
+	std::vector<std::shared_ptr<Expression>> offset;
+	~AddressingExpression(){}
+};
+
+//语句
+class Statement : public AstNode
+{
+public:
+	Statement(int _line, int _column) :AstNode(_line, _column) {}
+	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
+	~Statement() {}
+};
+
+//表达式语句
+class ExpressionStatement : public Statement
+{
+public:
+	ExpressionStatement(std::shared_ptr<Expression> expr, int _line, int _column) :Statement(_line, _column), expression(expr) {}
+	//包含一个表达式，其中包括赋值，函数调用，一元二元计算
+	std::shared_ptr<Expression> expression;
+	virtual operand evaluation(std::vector<Quaternion>& stms, Memory& memory, NameTable& table)
+	{
+		return expression->evaluation(stms, memory, table);
+	}
+	~ExpressionStatement() {}
+
+};
+
+
+
 //变量声明语句
 class VariableDeclareStatement : public Statement
 {
@@ -162,4 +176,20 @@ public:
 	//表达式解析
 	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
 	~VariableDeclareStatement() {}
+};
+
+//数组声明语句
+class ArrayDeclareStatement :public Statement
+{
+public:
+	ArrayDeclareStatement(int _line, int _column) :Statement(_line, _column) {}
+	//数组类型
+	Token type;
+	//类型名
+	std::string typeName;
+	//数组元素个数
+	std::vector<std::shared_ptr<Expression>> elementNums;
+	//数组名字
+	std::string name;
+	~ArrayDeclareStatement() {}
 };
