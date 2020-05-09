@@ -1,7 +1,7 @@
 #include<iostream>
-#include"Parser.h"
+#include"Intermediate.h"
 int main()
 {
-	Parser::testPrint("1.cyl");
+	Intermediate inter("1.cyl");
 
 }

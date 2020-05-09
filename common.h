@@ -65,6 +65,7 @@ enum Token {
 	KW_DOUBLE,    //double
 	KW_STRING,    //string
 	KW_BOOL,      //bool
+	KW_CHAR,      //char
 	KW_USING,     //using
 	KW_EXTERN,    //extern
 	KW_LIBRARY,   //library

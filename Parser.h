@@ -1,5 +1,6 @@
 #pragma once
 #include"common.h"
+#include"Ast.h"
 #include<string>
 #include<tuple>
 #include<vector>
@@ -8,9 +9,6 @@
 #include<iostream>
 class Parser
 {
-	//当前正在使用的token
-	std::tuple<Token, std::string> currentToken;
-
 	//token缓存队列，方便语法分析的时候能向后查看多个token
 	std::vector<std::tuple<Token, std::string>> tokenQueue;
 
@@ -23,30 +21,53 @@ class Parser
 	int line = 1;
 	//列
 	int column = 0;
-public:
-	Parser(){}
-	Parser(std::string fileName);
-	//初始化token队列
-	void initTokenQueue(int n);
+
 	//获取下一个token
 	std::tuple<Token, std::string> nextToken();
 
 	//获取下一个token到队列
 	std::tuple<Token, std::string> pushNextToken();
 
+	//获取第n位置token值
+	inline Token getToken(int n = 0) { return std::get<Token>(tokenQueue[n]); }
+
+	//获取第n位置token串
+	inline std::string getLexeme(int n = 0) { return std::get<std::string>(tokenQueue[n]); }
+
 	//获取下一个字符，不从流中清除
-	inline char peekChar() { return static_cast<char>(fs.peek());}
+	inline char peekChar() { return static_cast<char>(fs.peek()); }
 	inline char nextChar()
 	{
 		column++;
 		return static_cast<char>(fs.get());
 	}
 
-	//获取第n位置token值
-	inline Token getToken(int n = 0) { return std::get<Token>(tokenQueue[n]); }
-	//获取第n位置token串
-	inline std::string getCurrentLexeme(int n = 0) { return std::get<std::string>(tokenQueue[n]);}
 
+	//表达式解析
+	std::shared_ptr<Expression> parseExpression();
+	std::shared_ptr<Expression> parseUnaryExpr();
+	std::shared_ptr<Expression> parsePrimaryExpr();
+
+	//以下是语法分析用的函数
+	//语法入口
+	std::shared_ptr<Statement> parseStatement();
+	//声明表达式
+	std::shared_ptr<Statement> decalreStatement();
+	//变量声明
+	std::shared_ptr<VariableDeclareStatement> variableDeclare();
+public:
+	Parser();
+	Parser(std::string fileName);
+	//存放分析好的语句
+	std::vector<std::shared_ptr<Statement>> stms;
+	//初始化token队列
+	void initTokenQueue(int n);
+	void parse(std::string fileName);
+
+	
+
+	
+	//词法分析测试
 	static void testPrint(const std::string& fileName)
 	{		
 		Parser p(fileName);

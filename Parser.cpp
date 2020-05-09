@@ -1,4 +1,27 @@
 #include"Parser.h"
+Parser::Parser() :
+	keyWords({
+		{"if",KW_IF},
+		{"while",KW_WHILE},
+		{"return",KW_RETURN},
+		{"break",KW_BREAK},
+		{"function",KW_FUNC},
+		{"true",KW_TRUE},
+		{"false",KW_FALSE},
+		{"else",KW_ELSE},
+		{"int",KW_INT},
+		{"double",KW_DOUBLE},
+		{"bool",KW_BOOL},
+		{"string",KW_STRING},
+		{"char",KW_CHAR},
+		{"using",KW_USING},
+		{"extern",KW_EXTERN},
+		{"library",KW_LIBRARY},
+		{"string",KW_STRING},
+		{"list",KW_LIST},
+		{"class",KW_CLASS}
+		})
+{}
 Parser::Parser(std::string fileName):
 	keyWords({
 		{"if",KW_IF},
@@ -20,6 +43,7 @@ Parser::Parser(std::string fileName):
 		})
 {
 	fs.open(fileName);
+	//初始化token队列
 	initTokenQueue(3);
 }
 void Parser::initTokenQueue(int n)
@@ -28,6 +52,19 @@ void Parser::initTokenQueue(int n)
 	{
 		n--;
 		tokenQueue.push_back(nextToken());
+	}
+}
+void Parser::parse(std::string fileName)
+{
+	//读取代码
+	fs.open(fileName);
+	initTokenQueue(3);
+	//如果当前没有任何源码直接返回
+	if (getToken() == TK_EOF)
+		return;
+	while (getToken() != TK_EOF)
+	{
+		stms.push_back(parseStatement());
 	}
 }
 std::tuple<Token, std::string> Parser::nextToken()
@@ -314,4 +351,154 @@ std::tuple<Token, std::string> Parser::pushNextToken()
 	//删除队头token
 	tokenQueue.erase(index);
 	return tokenQueue[0];
+}
+
+
+std::shared_ptr<Statement> Parser::parseStatement()
+{
+	std::shared_ptr<Statement> result;
+	switch (getToken())
+	{
+	case KW_BOOL:
+		result = decalreStatement();
+		break;
+	default:
+		break;
+	}
+	return result;
+}
+
+std::shared_ptr<Statement> Parser::decalreStatement()
+{
+	return variableDeclare();
+}
+
+std::shared_ptr<VariableDeclareStatement> Parser::variableDeclare()
+{
+	auto result = std::make_shared<VariableDeclareStatement>(line,column);
+	//获取类型，类型名字
+	result->type = getToken();
+	result->typeName = getLexeme();
+	//吃掉类型token
+	pushNextToken();
+	//获取标识符
+	result->identName = getLexeme();
+	//吃掉标识符
+	pushNextToken();
+	return result;
+}
+
+
+
+std::shared_ptr<Expression> Parser::parseExpression()
+{
+	//检测一元表达式
+	auto unary_result = parseUnaryExpr();
+	//如果是赋值运算符
+	Token token = getToken();
+	if (token == TK_ASSIGN)
+	{
+		//判断左值是不是普通标识符
+		if (typeid(*unary_result) != typeid(IdentifierExpression))
+		{
+			throw("error");
+		}
+		auto result = std::make_shared<AssignExpression>(line, column);
+		//获取赋值符号
+		result->opt = getToken();
+		//获得左值
+		result->left_value = unary_result;
+		//吃掉赋值符号
+		pushNextToken();
+		//获得右值
+		result->right_value = parseExpression();
+		return result;
+	}
+
+	//检测二元运算符
+	//如果是以下这些运算符
+	while (token == TK_BITOR || token == TK_BITAND || token == TK_LOGAND || token == TK_LOGNOT ||
+		token == TK_EQ || token == TK_NE || token == TK_GT || token == TK_GE ||
+		token == TK_LT || token == TK_LE || token == TK_PLUS || token == TK_MINUS ||
+		token == TK_MOD || token == TK_TIMES || token == TK_DIV || token == TK_LOGOR || token == TK_BITNOT)
+	{
+		//二元表达式
+		auto result = std::make_shared<BinaryExpression>(line, column);
+		//这里放之前的一元表达式
+		result->left_expression = unary_result;
+		//保存预算符
+		result->opt = getToken();
+		//下一个符号
+		pushNextToken();
+		//右分支也是表达式
+		result->right_expression = parseExpression();
+		//这里是为了让二元表达式可以连续连接
+		unary_result = result;
+		token = getToken();
+	}
+	return unary_result;
+}
+
+std::shared_ptr<Expression> Parser::parseUnaryExpr()
+{
+	//什么情况下是一元表达式
+	int token = getToken();
+	//有符号前缀的情况下
+	if (token == TK_MINUS || token == TK_LOGNOT || token == TK_BITNOT)
+	{
+		//创建结点
+		auto result = std::make_shared<BinaryExpression>(line, column);
+		//左表达式是空
+		result->left_expression = nullptr;
+		//获取运算符
+		result->opt = token;
+		//吃掉运算符
+		pushNextToken();
+		//右分支还是一元表达式，例如---1，!!!!x等，一元表达式运算符可以叠加
+		result->right_expression = parseUnaryExpr();
+		return result;
+	}
+
+	//一些不带符号的基础表达式也列为无符号一元表达式
+	else if (token == TK_INT || token == TK_DOUBLE || token == TK_STR || token == TK_CHAR
+		|| token == TK_IDENT || token == KW_FALSE || token == KW_TRUE || token == TK_LPAREN || token == TK_LBRACE)
+	{
+		//返回基础表达式
+		return parsePrimaryExpr();
+	}
+	return nullptr;
+}
+
+std::shared_ptr<Expression> Parser::parsePrimaryExpr()
+{
+	//如果是标识符
+	if (getToken() == TK_IDENT)
+	{
+		//保留当前标识符名字
+		std::string identName = getLexeme();
+		return std::make_shared<IdentifierExpression>(identName, line, column);
+	}
+	//如果是布尔
+	else if (getToken() == KW_TRUE || getToken() == KW_FALSE)
+	{
+		//auto tVal = getCurrentLexeme();
+		bool val = getLexeme() == "true" ? true : false;
+		auto result = std::make_shared<BoolExpression>(val, line, column);
+		pushNextToken();
+		return result;
+	}
+	//如果是括号
+	else if (getToken() == TK_LPAREN)
+	{
+		//吃掉括号
+		pushNextToken();
+		auto result = parseExpression();
+		//获取右括号
+		if (getToken() != TK_RPAREN)
+			throw("error");
+		//吃掉右括号
+		pushNextToken();
+		return result;
+	}
+	return nullptr;
 }
