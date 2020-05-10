@@ -65,7 +65,8 @@ void Parser::parse(std::string fileName)
 		return;
 	while (getToken() != TK_EOF)
 	{
-		stms.push_back(parseStatement());
+		auto statement = parseStatement();
+		stms.push_back(statement);
 	}
 }
 std::tuple<Token, std::string> Parser::nextToken()
@@ -393,7 +394,11 @@ std::shared_ptr<VariableDeclareStatement> Parser::variableDeclare()
 	//吃掉类型token
 	pushNextToken();
 	//获取标识符
-	result->identName = getLexeme();
+	//如果遇到的声明是非标识符则要报错
+	if(getToken() == TK_IDENT)
+		result->identName = getLexeme();
+	else
+		error(BAD_IDENT,line-1,column);
 	//吃掉标识符
 	pushNextToken();
 	return result;
@@ -424,11 +429,15 @@ std::shared_ptr<ArrayDeclareStatement> Parser::arrayDeclare()
 		}
 		else
 		{
-			//这里要报错，暂时抛出个异常
-			throw("error");
+			//这里要报错
+			error(ARRAY_DEC_ELEMENT, line - 1, column);
 		}
 		//吃掉中括号
-		pushNextToken();
+		if (getToken() != TK_RBRACKET)
+			error(MISSING_BARCKET, line, column);
+		else
+			pushNextToken();
+		
 	}
 	return result;
 }
@@ -496,7 +505,10 @@ std::shared_ptr<Expression> Parser::parseExpression()
 			//右分支也是表达式
 			result->offset.push_back(parseExpression());
 			//吃掉中括号
-			pushNextToken();
+			if (getToken() != TK_RBRACKET)
+				error(MISSING_BARCKET,line-1,column);
+			else
+				pushNextToken();
 		}
 		return result;
 	}
@@ -566,7 +578,6 @@ std::shared_ptr<Expression> Parser::parsePrimaryExpr()
 	//如果是布尔
 	else if (getToken() == KW_TRUE || getToken() == KW_FALSE)
 	{
-		//auto tVal = getCurrentLexeme();
 		bool val = getLexeme() == "true" ? true : false;
 		auto result = std::make_shared<BoolExpression>(val, line, column);
 		pushNextToken();
@@ -614,5 +625,10 @@ std::shared_ptr<Statement> Parser::expression()
 {
 	//普通表达式
 	auto expr = parseExpression();
+	if (!expr)
+	{
+		error(ERROR_EXPRESSION, line, column);
+		exit(0);
+	}
 	return std::make_shared<ExpressionStatement>(expr,line,column);
 }

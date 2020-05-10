@@ -7,8 +7,10 @@
 #include<fstream>
 #include<unordered_map>
 #include<iostream>
+#include"Error.h"
 class Parser
 {
+	Error error;
 	//token缓存队列，方便语法分析的时候能向后查看多个token
 	std::vector<std::tuple<Token, std::string>> tokenQueue;
 
