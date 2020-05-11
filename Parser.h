@@ -8,6 +8,7 @@
 #include<unordered_map>
 #include<iostream>
 #include"Error.h"
+#include<queue>
 class Parser
 {
 	Error error;
@@ -20,9 +21,11 @@ class Parser
 	//输入的代码
 	std::fstream fs;
 	//行
-	int line = 1;
+	int line = 0;
+	std::queue<int> lines;
 	//列
 	int column = 0;
+	std::queue<int> columns;
 
 	//获取下一个token
 	std::tuple<Token, std::string> nextToken();
@@ -61,6 +64,10 @@ class Parser
 	std::shared_ptr<VariableDeclareStatement> variableDeclare();
 	//数组声明
 	std::shared_ptr<ArrayDeclareStatement> arrayDeclare();
+
+	//分号
+	void semicolon();
+
 public:
 	Parser();
 	Parser(std::string fileName);

@@ -53,6 +53,8 @@ void Parser::initTokenQueue(int n)
 	{
 		n--;
 		tokenQueue.push_back(nextToken());
+		lines.push(line);
+		columns.push(column);
 	}
 }
 void Parser::parse(std::string fileName)
@@ -348,13 +350,16 @@ std::tuple<Token, std::string> Parser::pushNextToken()
 {
 	//存放一个token
 	tokenQueue.push_back(nextToken());
+	lines.push(line);
+	columns.push(column);
 	//获取队列里第一个token下标
 	auto index = tokenQueue.begin();
 	//删除队头token
 	tokenQueue.erase(index);
+	lines.pop();
+	columns.pop();
 	return tokenQueue[0];
 }
-
 
 std::shared_ptr<Statement> Parser::parseStatement()
 {
@@ -368,10 +373,14 @@ std::shared_ptr<Statement> Parser::parseStatement()
 	case KW_STRING:
 	case KW_FLOAT:
 		result = decalre();
+		//检测分号
+		semicolon();
 		break;
 	//表达式语句
 	default:
 		result = expression();
+		//检测分号
+		semicolon();
 		break;
 	}
 	return result;
@@ -398,8 +407,9 @@ std::shared_ptr<VariableDeclareStatement> Parser::variableDeclare()
 	if(getToken() == TK_IDENT)
 		result->identName = getLexeme();
 	else
-		error(BAD_IDENT,line-1,column);
+		error(BAD_IDENT,line-1,column-3);
 	//吃掉标识符
+	if(getToken() != TK_SEM)
 	pushNextToken();
 	return result;
 }
@@ -423,23 +433,47 @@ std::shared_ptr<ArrayDeclareStatement> Parser::arrayDeclare()
 		pushNextToken();
 		//检测下标是否符合规则，要求下标是整形数字
 		std::shared_ptr<Expression> index = parseExpression();
-		if (typeid(*index) == typeid(IntExpression))
+		if (!index)
 		{
-			result->elementNums.push_back(index);
+			//如果没有下标元素则报错
+			error(MISSING_INDEX, lines.front(), columns.front());
 		}
 		else
 		{
-			//这里要报错
-			error(ARRAY_DEC_ELEMENT, line - 1, column);
+			if (typeid(*index) == typeid(IntExpression))
+			{
+				result->elementNums.push_back(index);
+			}
+			else
+			{
+				//这里要报错
+				error(ARRAY_DEC_ELEMENT, lines.front(), columns.front());
+			}
 		}
 		//吃掉中括号
 		if (getToken() != TK_RBRACKET)
-			error(MISSING_BARCKET, line, column);
+			error(MISSING_BARCKET, lines.front(), columns.front());
 		else
 			pushNextToken();
 		
 	}
 	return result;
+}
+
+void Parser::semicolon()
+{
+	//检查是否为分号
+	if (getToken() == TK_SEM)
+	{
+		//吃掉分号
+		while(getToken() == TK_SEM)
+			pushNextToken();
+	}
+	else
+	{
+		//报错，缺少分号
+		error(MISSING_SEM,lines.front(),columns.front());
+	}
 }
 
 
@@ -496,17 +530,23 @@ std::shared_ptr<Expression> Parser::parseExpression()
 		
 		//二元表达式
 		auto result = std::make_shared<AddressingExpression>(line, column);
-		//这里放之前的一元表达式
+		//这里放之前的一元表达式，没有则报错
+		if (!unary_result)
+			error(MISSING_ARRAY_NAME, line - 1, column-3);
 		result->base = unary_result;
 		while (getToken() == TK_LBRACKET)
 		{
 			//吃掉中括号
 			pushNextToken();
 			//右分支也是表达式
-			result->offset.push_back(parseExpression());
+			auto expression = parseExpression();
+			//若没有下标则报错
+			if(!expression)
+				error(MISSING_INDEX, lines.front(), columns.front());
+			result->offset.push_back(expression);
 			//吃掉中括号
 			if (getToken() != TK_RBRACKET)
-				error(MISSING_BARCKET,line-1,column);
+				error(MISSING_BARCKET,lines.front(),columns.front());
 			else
 				pushNextToken();
 		}
@@ -627,7 +667,7 @@ std::shared_ptr<Statement> Parser::expression()
 	auto expr = parseExpression();
 	if (!expr)
 	{
-		error(ERROR_EXPRESSION, line, column);
+		error(ERROR_EXPRESSION, line, column-3);
 		exit(0);
 	}
 	return std::make_shared<ExpressionStatement>(expr,line,column);

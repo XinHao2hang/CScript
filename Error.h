@@ -8,8 +8,10 @@ enum ErrID
 	MISSING_BARCKET = 0,//缺少中括号
 	ERROR_EXPRESSION,//表达式错误
 	ARRAY_DEC_ELEMENT,//数组声明下标错误
-	BAD_IDENT//错误标识符
-
+	BAD_IDENT,//错误标识符
+	MISSING_SEM,//缺少分号
+	MISSING_ARRAY_NAME,//缺少数组名
+	MISSING_INDEX,//缺少下标
 };
 //错误显示
 class Error
@@ -18,7 +20,10 @@ class Error
 	"Missing bracket",
 	"Error expression",
 	"Number of elements of the array to be determined",
-	"Bad identifier"
+	"Bad identifier",
+	"Missing semicolon",
+	"Missing array name",
+	"Missing index"
 	};
 public:
 	void operator()(ErrID id,int line,int column)
