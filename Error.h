@@ -13,6 +13,7 @@ enum ErrID
 	MISSING_ARRAY_NAME,//缺少数组名
 	MISSING_INDEX,//缺少下标
 	NOT_LEFT_VALUE,//不是左值
+	INVAILD_ARRAY_VALUE,//无效的数值数值
 };
 //错误显示
 class Error
@@ -25,7 +26,8 @@ class Error
 	"Missing semicolon",
 	"Missing array name",
 	"Missing index",
-	"Not a left value"
+	"Not a left value",
+	"Missing comma or invaild array value"
 	};
 public:
 	void operator()(ErrID id,int line,int column)

@@ -1,1 +1,2 @@
-int _a = 10;
+int b;
+int a[3]={b,2,3,ree};

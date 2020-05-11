@@ -452,6 +452,14 @@ std::shared_ptr<ArrayDeclareStatement> Parser::arrayDeclare()
 		else
 			pushNextToken();
 	}
+	//如果有赋值
+	if (getToken() == TK_ASSIGN)
+	{
+		//吃掉赋值符号
+		pushNextToken();
+		//获取赋值
+		result->initValue = parseExpression();
+	}
 	return result;
 }
 
@@ -470,8 +478,6 @@ void Parser::semicolon()
 		error(MISSING_SEM,lines.front(),columns.front());
 	}
 }
-
-
 
 std::shared_ptr<Expression> Parser::parseExpression()
 {
@@ -590,25 +596,6 @@ std::shared_ptr<Expression> Parser::parsePrimaryExpr()
 	{
 		//保留当前标识符名字
 		std::string identName = getLexeme();
-		////如果是数组
-		//if (getToken(1) == TK_LBRACKET)
-		//{
-		//	auto result = std::make_shared<AddressingExpression>(line, column);
-		//	//获取基址
-		//	result->base = identName;
-		//	//吃掉标识符
-		//	pushNextToken();
-		//	while (getToken() == TK_LBRACKET)
-		//	{
-		//		//吃掉中括号
-		//		pushNextToken();
-		//		//获取偏移
-		//		result->offset.push_back(parseExpression());
-		//		//吃掉中括号
-		//		pushNextToken();
-		//	}
-		//	return result;
-		//}
 		//吃掉标识符
 		pushNextToken();
 		return std::make_shared<IdentifierExpression>(identName, line, column);
@@ -655,6 +642,39 @@ std::shared_ptr<Expression> Parser::parsePrimaryExpr()
 		//吃掉数字
 		pushNextToken();
 		return std::make_shared<FloatExpression>(val, line, column);
+	}
+	//遇到大括号的时候
+	else if (getToken() == TK_LBRACE)
+	{
+		auto result = std::make_shared<ArrayValueExpression>(lines.front(),columns.front());
+		//吃掉大括号
+		pushNextToken();
+		while (getToken() != TK_RBRACE)
+		{
+			//获取一个元素，也是一个表达式
+			result->exprs.push_back(parseExpression());
+			//如果下一个不是逗号或者右大括号说明表达式错误
+			while(getToken() != TK_COMMA && getToken() != TK_RBRACE)
+			{
+				//报错
+				error(INVAILD_ARRAY_VALUE,lines.front(),columns.front());
+				//吃掉错误表达式
+				pushNextToken();
+				//可能会延续到结尾
+				if (getToken() == TK_EOF)
+					return nullptr;
+			}
+			if (getToken() == TK_RBRACE)
+			{
+				//吃掉大括号
+				pushNextToken();
+				break;
+			}
+			//吃掉逗号
+			pushNextToken();
+			
+		}
+		return result;
 	}
 	return nullptr;
 }

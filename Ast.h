@@ -136,6 +136,16 @@ public:
 	~AddressingExpression(){}
 };
 
+//数组值表达式
+class ArrayValueExpression : public Expression
+{
+public:
+	ArrayValueExpression(int _line, int _column) :Expression(_line, _column) {}
+	//数值表达式
+	std::vector<std::shared_ptr<Expression>> exprs;
+	~ArrayValueExpression() {}
+};
+
 //语句
 class Statement : public AstNode
 {
@@ -190,5 +200,7 @@ public:
 	std::vector<std::shared_ptr<Expression>> elementNums;
 	//数组名字
 	std::string name;
+	//数组初始值
+	std::shared_ptr<Expression> initValue;
 	~ArrayDeclareStatement() {}
 };
