@@ -404,13 +404,9 @@ std::shared_ptr<VariableDeclareStatement> Parser::variableDeclare()
 	pushNextToken();
 	//获取标识符
 	//如果遇到的声明是非标识符则要报错
-	if(getToken() == TK_IDENT)
-		result->identName = getLexeme();
-	else
-		error(BAD_IDENT,line-1,column-3);
-	//吃掉标识符
-	if(getToken() != TK_SEM)
-	pushNextToken();
+	result->ident = parseExpression();
+	if(typeid(*(result->ident)) != typeid(IdentifierExpression) && typeid(*(result->ident)) != typeid(AssignExpression))
+		error(BAD_IDENT,lines.front(),columns.front());
 	return result;
 }
 
@@ -455,7 +451,6 @@ std::shared_ptr<ArrayDeclareStatement> Parser::arrayDeclare()
 			error(MISSING_BARCKET, lines.front(), columns.front());
 		else
 			pushNextToken();
-		
 	}
 	return result;
 }
@@ -482,6 +477,9 @@ std::shared_ptr<Expression> Parser::parseExpression()
 {
 	//检测一元表达式
 	auto unary_result = parseUnaryExpr();
+	//如果非法表达式直接返回
+	if (!unary_result)
+		return unary_result;
 	//如果是赋值运算符
 	Token token = getToken();
 	if (token == TK_ASSIGN)
@@ -489,7 +487,8 @@ std::shared_ptr<Expression> Parser::parseExpression()
 		//判断左值是不是普通标识符
 		if (typeid(*unary_result) != typeid(IdentifierExpression))
 		{
-			throw("error");
+			//不是可赋值对象
+			error(NOT_LEFT_VALUE,lines.front(),columns.front());
 		}
 		auto result = std::make_shared<AssignExpression>(line, column);
 		//获取赋值符号
@@ -502,7 +501,6 @@ std::shared_ptr<Expression> Parser::parseExpression()
 		result->right_value = parseExpression();
 		return result;
 	}
-
 	//检测二元运算符
 	//如果是以下这些运算符
 	while (token == TK_BITOR || token == TK_BITAND || token == TK_LOGAND || token == TK_LOGNOT ||

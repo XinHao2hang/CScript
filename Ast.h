@@ -160,8 +160,6 @@ public:
 
 };
 
-
-
 //变量声明语句
 class VariableDeclareStatement : public Statement
 {
@@ -172,7 +170,8 @@ public:
 	//类型名字
 	std::string typeName;
 	//标识符表达式
-	std::string identName;
+	//std::string identName;
+	std::shared_ptr<Expression> ident;
 	//表达式解析
 	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
 	~VariableDeclareStatement() {}
