@@ -363,7 +363,7 @@ std::tuple<Token, std::string> Parser::pushNextToken()
 
 std::shared_ptr<Statement> Parser::parseStatement()
 {
-	std::shared_ptr<Statement> result;
+	std::shared_ptr<Statement> result = nullptr;
 	switch (getToken())
 	{
 	//声明语句
@@ -373,8 +373,6 @@ std::shared_ptr<Statement> Parser::parseStatement()
 	case KW_STRING:
 	case KW_FLOAT:
 		result = decalre();
-		//检测分号
-		semicolon();
 		break;
 	//表达式语句
 	default:
@@ -389,9 +387,21 @@ std::shared_ptr<Statement> Parser::parseStatement()
 std::shared_ptr<Statement> Parser::decalre()
 {
 	if (getToken(2) == TK_LBRACKET)
-		return arrayDeclare();
+	{
+		auto result = arrayDeclare();
+		//检测分号
+		semicolon();
+		return result;
+	}
+	else if (getToken(2) == TK_LPAREN)
+		return functionDeclare();
 	else
-		return variableDeclare();
+	{
+		auto result = variableDeclare();
+		//检测分号
+		semicolon();
+		return result;
+	}
 }
 
 std::shared_ptr<VariableDeclareStatement> Parser::variableDeclare()
@@ -460,6 +470,78 @@ std::shared_ptr<ArrayDeclareStatement> Parser::arrayDeclare()
 		//获取赋值
 		result->initValue = parseExpression();
 	}
+	return result;
+}
+
+std::shared_ptr<FunctionDeclareStatement> Parser::functionDeclare()
+{
+	auto result = std::make_shared<FunctionDeclareStatement>(lines.front(),columns.front());
+	//获取类别
+	result->type = getToken();
+	//获取类型名
+	result->typeName = getLexeme();
+	//吃掉类型
+	pushNextToken();
+	//获取函数名字
+	result->functionName = getLexeme();;
+	//吃掉函数名
+	pushNextToken();
+	//吃掉括号
+	pushNextToken();
+
+	//获取参数列表
+	while (getToken() != TK_RPAREN)
+	{
+		//放入参数
+		auto statement = variableDeclare();
+		result->argsList.push_back(statement);
+
+		//到了参数列表结尾
+		if (getToken() == TK_RPAREN)
+		{
+			//吃掉括号
+			pushNextToken();
+			break;
+		}
+		//如果不是逗号则报错
+		if (getToken() != TK_COMMA)
+		{
+			//如果下一个不是逗号或者右括号就继续报错吃符号
+			while (getToken() != TK_COMMA && getToken() != TK_RPAREN)
+			{
+				error(MISSING_COMMA, lines.front(), columns.front());
+				pushNextToken();
+				//如果一直延续到结尾，直接返回
+				if (getToken() == TK_EOF)
+					return nullptr;
+			}
+		}
+		else//吃掉逗号
+			pushNextToken();
+	}
+	//获取函数块
+	result->block = codeBlock();
+	return result;
+}
+
+std::shared_ptr<CodeBlockStatement> Parser::codeBlock()
+{
+	//不是大括号要报错
+	if (getToken() != TK_LBRACE)
+	{
+		error(MISSING_BRACE, lines.front(), columns.front());
+		return nullptr;
+	}
+	else
+		pushNextToken();
+	auto result = std::make_shared<CodeBlockStatement>(lines.front(),columns.front());
+	//获取代码
+	while (getToken() != TK_RBRACE)
+	{
+		result->statements.push_back(parseStatement());
+	}
+	//吃掉大括号
+	pushNextToken();
 	return result;
 }
 

@@ -64,7 +64,10 @@ class Parser
 	std::shared_ptr<VariableDeclareStatement> variableDeclare();
 	//数组声明
 	std::shared_ptr<ArrayDeclareStatement> arrayDeclare();
-
+	//函数声明
+	std::shared_ptr<FunctionDeclareStatement> functionDeclare();
+	//代码块
+	std::shared_ptr<CodeBlockStatement> codeBlock();
 	//分号
 	void semicolon();
 

@@ -204,3 +204,32 @@ public:
 	std::shared_ptr<Expression> initValue;
 	~ArrayDeclareStatement() {}
 };
+
+//代码块表达式
+class CodeBlockStatement : public Statement
+{
+public:
+	CodeBlockStatement(int _line, int _column) :Statement(_line, _column) {}
+	//代码块
+	std::vector<std::shared_ptr<Statement>> statements;
+	~CodeBlockStatement() {}
+};
+
+//函数声明表达式
+class FunctionDeclareStatement :public Statement
+{
+public:
+	FunctionDeclareStatement(int _line, int _column) :Statement(_line, _column) {}
+	//类型
+	Token type;
+	//类型名字
+	std::string typeName;
+	//函数名
+	std::string functionName;
+	//函数参数列表，参数列表中必须都是声明表达式
+	std::vector<std::shared_ptr<Statement>> argsList;
+	//代码块
+	std::shared_ptr<CodeBlockStatement> block;
+	~FunctionDeclareStatement(){}
+};
+

@@ -1,2 +1,5 @@
-int b;
-int a[3]={b,2,3,ree};
+int fun(int a,int b)
+{
+	int x;
+	x = x+1;
+}
