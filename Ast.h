@@ -79,6 +79,8 @@ public:
 	IntExpression(int _value, int _line, int _column) :Expression(_line, _column), exp_value(_value) {}
 	//表达式的值
 	int exp_value;
+	//表达式求值
+	virtual operand evaluation(std::vector<Quaternion>& stms, Memory& memory, NameTable& table);
 	~IntExpression() {}
 };
 
@@ -120,7 +122,7 @@ public:
 	Token opt;
 	//右值表达式
 	std::shared_ptr<Expression> right_value;
-	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
+	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table);
 	~AssignExpression() {}
 };
 
@@ -183,7 +185,7 @@ public:
 	//std::string identName;
 	std::shared_ptr<Expression> ident;
 	//表达式解析
-	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
+	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table);
 	~VariableDeclareStatement() {}
 };
 

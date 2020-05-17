@@ -1,5 +1,2 @@
-int fun(int a,int b)
-{
-	int x;
-	x = x+1;
-}
+int a;
+int b = 99;

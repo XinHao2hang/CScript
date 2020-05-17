@@ -3,4 +3,5 @@
 int main()
 {
 	Intermediate inter("1.cyl");
+	inter.execute();
 }

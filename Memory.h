@@ -16,7 +16,8 @@ public:
 	int ebp = 0;
 	int malloc(int size)
 	{
-		return address+=size;
+		address += size;
+		return address-size;
 	}
 	char & operator[](int addr)
 	{

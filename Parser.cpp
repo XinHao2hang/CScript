@@ -519,7 +519,13 @@ std::shared_ptr<FunctionDeclareStatement> Parser::functionDeclare()
 		else//吃掉逗号
 			pushNextToken();
 	}
-	//获取函数块
+	//获取函数块,如果只有声明就直接返回
+	if (getToken() == TK_SEM)
+	{
+		//吃掉分号
+		pushNextToken();
+		return result;
+	}
 	result->block = codeBlock();
 	return result;
 }

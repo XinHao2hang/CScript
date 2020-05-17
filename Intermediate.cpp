@@ -19,7 +19,7 @@ void Intermediate::execute()
 	auto stms = parser.stms;
 	for (auto stm : stms)
 	{
-		stm->evaluation(code,memory,table);
+		operand op = stm->evaluation(code,memory,table);
 	}
 	for (auto c : code)
 	{
