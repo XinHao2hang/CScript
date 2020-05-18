@@ -60,5 +60,32 @@ operand IntExpression::evaluation(std::vector<Quaternion>& stms, Memory& memory,
 operand IdentifierExpression::evaluation(std::vector<Quaternion>& stms, Memory& memory, NameTable& table)
 {
 	//处理标识符，返回标识符的地址
-	return operand(MD_PTR, table.findAddress(exp_name),true);
+	int type = table.getType(exp_name);
+	return operand(type, table.findAddress(exp_name),true);
+}
+
+operand BinaryExpression::evaluation(std::vector<Quaternion>& stms, Memory& memory, NameTable& table)
+{
+	operand result;
+	operand rightValue = right_expression->evaluation(stms, memory, table);
+	operand leftValue = left_expression->evaluation(stms, memory, table);
+	Token resType;
+	if (opt == TK_PLUS)
+	{
+		//类型判断
+		if (rightValue.type == KW_STRING || leftValue.type == KW_STRING)
+		{
+			//字符串不支持运算，报错
+		}
+		else if (rightValue.type == KW_INT || leftValue.type == KW_INT)
+			resType = KW_INT;
+
+		int addr = memory.malloc(4);
+		result = operand(resType,addr,true);
+		table.push(std::make_tuple(KW_INT,0,addr,"temp@"+addr));
+		stms.push_back(Quaternion(ADD,leftValue,rightValue,result));
+	}
+
+	return result;
+	
 }

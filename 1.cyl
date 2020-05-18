@@ -1,3 +1,4 @@
 int a;
 int b = 99;
-b = a;
+int c = 10;
+b = a + b + c + 888;

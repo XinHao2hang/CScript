@@ -108,7 +108,7 @@ public:
 	//右表达式分支
 	std::shared_ptr<Expression> right_expression = nullptr;
 	//表达式解析
-	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
+	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table);
 };
 
 //赋值表达式
