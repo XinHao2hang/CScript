@@ -91,7 +91,7 @@ public:
 	IdentifierExpression(std::string identName, int _line, int _column) :Expression(_line, _column), exp_name(move(identName)) {}
 	std::string exp_name;
 	//表达式解析
-	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table) { return operand(); }
+	virtual operand evaluation(std::vector<Quaternion>& context, Memory& memory, NameTable& table);
 	~IdentifierExpression() {}
 };
 

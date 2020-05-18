@@ -76,6 +76,7 @@ enum Token {
 	TK_SEM,		  //;
 	TK_NOTE, //×¢ÊÍ
 
+	MD_PTR,
 
 	KW_OBJECT
 };

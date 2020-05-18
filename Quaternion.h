@@ -43,14 +43,14 @@ class NameTable
 public:
 	NameTable() {}
 	~NameTable() {}
-	//类别，数值，变量名字
-	std::vector<std::tuple<int, int, std::string>> s;
-	void push(std::tuple<int, int, std::string> num)
+	//类别，数值，地址，变量名字
+	std::vector<std::tuple<int, int,int, std::string>> s;
+	void push(std::tuple<int, int,int, std::string> num)
 	{
 		s.push_back(num);
 	}
 
-	std::tuple<int, int, std::string> top()
+	std::tuple<int, int,int, std::string> top()
 	{
 		return s[s.size() - 1];
 	}
@@ -61,6 +61,16 @@ public:
 	}
 
 	int findAddress(std::string name)
+	{
+		for (int i = s.size() - 1; i >= 0; i--)
+		{
+			if (std::get<std::string>(s[i]) == name)
+				return std::get<2>(s[i]);
+		}
+		return -1;
+	}
+
+	int findValue(std::string name)
 	{
 		for (int i = s.size() - 1; i >= 0; i--)
 		{
